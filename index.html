@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title> Graph based javascript project</title>
+	<link href="css/bootstrap.min.css" type="text/css" rel="stylesheet" />
+	<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+	<script type="text/javascript" src="js/d3.js"></script>
+	<meta charset="utf-8">
+	<script type="text/javascript" src="js/queue.v1.min.js"></script>
+	<style>
+	html,body{width: 100%; height: 100%;}
+	*{
+		box-sizing: border-box;
+	}
+	.wrapper {
+	    float: left;
+	    width: 100%;
+	    min-height: 100%;
+	    display: table;
+	}
+	.wrapper-inner {
+	    display: table-cell;
+	    vertical-align: middle;
+	}
+
+	.node {
+		cursor: pointer;
+		border-style: solid;
+    border-width: 2px 10px 4px 20px;
+	}
+
+	.node circle {
+	  fill: #fff;
+	  stroke: steelblue;
+	  stroke-width: 3px;
+	}
+	
+	.node rect {
+	  fill: #fff;
+	  stroke: steelblue;
+	  stroke-width: 3px;
+	}
+
+	.node text {
+	  font: 12px sans-serif;
+	}
+
+	.link {
+	  fill: none;
+	  stroke: #ccc;
+	  stroke-width: 2px;
+	}
+	input#ob-cqm-input{
+		margin-left:15px;
+	}
+	h2 span{
+		margin-left:10px;
+	}
+	div#result-wrapper {
+	   background-color: #eeeeee;
+    float: left;
+    padding: 20px;
+    width: 100%;
+	  
+	}
+	.page-title{
+		 float: left;
+    font-weight: 600;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    width: 100%;
+	}
+	.left-content {
+    float: left;
+    width: 15%;
+}
+.left-content ul {
+    border: 1px solid;
+    list-style: outside none none;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+}
+.left-content li {
+    border-bottom: 1px solid;
+    padding: 10px 0px;
+    cursor: pointer;
+}
+.right-content{
+	 float: left;
+    padding: 0 40px;
+    width: 85%
+  
+}
+  </style>
+</head>
+<body>
+<div class="wrapper">
+	<div class="wrapper-inner">
+		<div class="content">
+		     <div class="container">
+		         <div class="row">
+		            <div class="col-sm-12 text-center"> 
+		             <h1 class="page-title"> Obs - Standard Code Set Mapper</h1>
+		             <div class="form-group">
+		                <label> Enter OBS code: </label><input class="form-controls" type="text" id="ob-cqm-input" value="3094" />
+		                <input type="button" id="submit_data" name="submit_data" value="Search"/>
+		             </div>
+		             </div>
+		            <div class="col-sm-12">
+
+		             <div id="result-wrapper">
+		                  <div class="left-content">
+		                       <ul class="sidebar-list">
+		                          <<!-- li><span>3094</span></li>
+		                          <li><span>21679</span></li>
+		                          <li><span>2487</span></li> -->
+		                       </ul>
+		                     
+                          </div>
+                          <div class="right-content">
+                          </div>
+
+		             </div>
+		            </div>
+		         </div>
+		     </div>
+		</div>
+	</div>
+</div>
+    <script type="text/javascript">
+    	jQuery(function($) {
+				    var resultWrapper = d3.select("#result-wrapper");
+				    var rightContent=  d3.select(".right-content");
+				    var sidebarLinks=   d3.select(".left-content li");
+				    var sidebarList=    d3.select("ul.sidebar-list");
+				    var mappingJsonData = new Array();
+				    var graphJsonData = new Array();
+
+				    function findInMappingData(id) {
+				        var isFound = false;
+				        var item = new Object();
+
+				        for (var i = 0, len = mappingJsonData.length; i < len; i++) {
+
+				            if (mappingJsonData[i].obscode == id) {
+				                item = mappingJsonData[i];
+				                item.type = "obscode";
+				                isFound = true;
+				                break;
+				            }
+				            if (mappingJsonData[i].cqmcode == id) {
+				                item = mappingJsonData[i];
+				                item.type = "cqmcode";
+				                isFound = true;
+				                break;
+				            }
+				        }
+				        return item;
+				    }
+
+				    function parseDesc(string) {
+				        var tags = [];
+				        var split_array = string.split(",");
+				        if (split_array.length > 1) {
+				            tags.push.apply(tags, split_array);
+				        } else {
+
+				            for (var key in split_array) {
+				                var space_split = split_array[key].split(" ");
+				                tags.push.apply(tags, space_split);
+				            }
+
+				        }
+
+
+				        return tags;
+				    }
+
+				    function findGraphValues(tags) {
+
+
+				        var items = new Array();
+
+				        for (var item in tags) {
+				            var isFound = false;
+				            for (var i = 0, len = graphJsonData.length; i < len; i++) {
+
+				                if (graphJsonData[i].node == tags[item]) {
+				                    items.push(graphJsonData[i]);
+				                    isFound = true;
+
+				                }
+				            }
+				            if (!isFound) {
+				                items.push({
+				                    node: tags[item],
+				                    "neighbors": []
+				                })
+				            }
+
+
+				        }
+
+
+
+				        return items;
+
+				    }
+
+				    function drawD3Graph(root) {
+				        if (root.children.length > 0) {
+				            var margin = {
+				                    top: 20,
+				                    right: 60,
+				                    bottom: 20,
+				                    left: 100
+				                },
+				                width = 400 - margin.right - margin.left,
+				                height = 200 - margin.top - margin.bottom;
+				        } else {
+				            var margin = {
+				                    top: 20,
+				                    right: 60,
+				                    bottom: 20,
+				                    left: 50
+				                },
+				                width = 150 - margin.right - margin.left,
+				                height = 200 - margin.top - margin.bottom;
+
+				        }
+
+				        var i = 0;
+				        var tree = d3.layout.tree()
+				            .size([height, width]);
+				        var diagonal = d3.svg.diagonal()
+				            .projection(function(d) {
+				                return [d.y, d.x];
+				            });
+				        var svg = rightContent.append("svg")
+				            .attr("width", width + margin.right + margin.left)
+				            .attr("height", height + margin.top + margin.bottom)
+				            .append("g")
+				            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+				        update(root);
+
+				        function update(source) {
+
+				            // Compute the new tree layout.
+				            var nodes = tree.nodes(root).reverse(),
+				                links = tree.links(nodes);
+
+				            // Normalize for fixed-depth.
+				            nodes.forEach(function(d) {
+				                d.y = d.depth * 180;
+				            });
+
+				            // Declare the nodes…
+				            var node = svg.selectAll("g.node")
+				                .data(nodes, function(d) {
+				                    return d.id || (d.id = ++i);
+				                });
+
+				            // Enter the nodes.
+				            var nodeEnter = node.enter().append("g")
+				                .attr("class", "node")
+				                .attr("transform", function(d) {
+				                    return "translate(" + d.y + "," + d.x + ")";
+				                });
+
+				            nodeEnter.append("circle")
+				                .attr("r", 10)
+				                .style("fill", "#fff");
+
+				            nodeEnter.append("text")
+
+				            .attr("x", function(d) {
+				                    return d.children || d._children ? -15 : 15;
+				                })
+				                .attr("dy", ".35em")
+				                .attr("text-anchor", function(d) {
+				                    return d.children || d._children ? "end" : "start";
+				                })
+				                .text(function(d) {
+				                    return d.name;
+				                })
+				                .style("fill-opacity", 1);
+
+				            // Declare the links…
+				            var link = svg.selectAll("path.link")
+				                .data(links, function(d) {
+				                    return d.target.id;
+				                });
+
+				            // Enter the links.
+				            link.enter().insert("path", "g")
+				                .attr("class", "link")
+				                .attr("d", diagonal);
+
+				        }
+				    }
+
+				    function drawTreeChart(icons) {
+				        var root, node, neighbors, iconItem, item;
+				        var data = new Array();
+
+				        for (var key in icons) {
+				            item = icons[key];
+				            iconItem = new Object();
+				            iconItem["name"] = item["node"];
+				            iconItem["parent"] = null;
+				            iconItem["children"] = new Array();
+				            var neighbors = item["neighbors"];
+				            for (var c_key in neighbors) {
+				                var child_item = new Object();
+				                child_item["name"] = neighbors[c_key];
+				                child_item["parent"] = iconItem;
+
+				                iconItem["children"].push(child_item);
+				            }
+
+				            drawD3Graph(iconItem);
+
+
+
+
+				        }
+
+				    }
+
+				    function filiterResult(itemCode) {
+				        var item, graphDesc;
+				        var graphIcons = [];
+				        
+				        rightContent.style("display","block").html("");
+
+				        var item = findInMappingData(itemCode);
+				        if (!Object.keys(item).length)
+				            return false;
+				        graphDesc = parseDesc(item.type == "obscode" ? item.obsdesciption : item.cqmdesciption);
+				        if(item.type == "obscode"){ 
+				        
+                          rightContent.append("text").html(function(){
+                          	     return  "<h2><label>OBS Code: </label><span>"+item.obscode+"</span></h2><h2><label> OBS Description: </label><span>"+item.obsdesciption+"</span></h2>";
+                          	});
+				        }
+				        else{
+                            rightContent.append("text").html(function(){
+                            	  return "<h2><label>Standard Code: </label><span>"+item.cqmcode+"</span></h2><h2><label>Standard Code Description: </label><span> "+item.cqmdesciption+"</span></h2>";
+                            	});
+				        	
+
+				        }
+
+				       
+				        graphIcons = findGraphValues(graphDesc);
+				        drawTreeChart(graphIcons);
+				        if(item.type == "obscode"){
+				        	rightContent.append("text").html(function(){
+				        		 return "<h2><label>Standard Code: </label><span>"+item.cqmcode+"</span></h2><h2><label>Standard Code Description:</label><span>"+item.cqmdesciption+"</span></h2>";
+				        	});
+                         
+				        }
+				        else{
+
+				        	rightContent.append("text").html(function(){
+				        		 return "<h2><label> OBS Code: </label><span>"+item.obscode+"</span></h2><h2><label>Obs Desciption:</label><span>"+item.obsdesciption+"</span></h2>";
+				        	});
+
+				        
+
+				        }
+
+
+				    }
+
+
+				    function initializeScript(error, mappingData, graphData) {
+
+				        if (error = null) {
+				            alert("Error in loading json data");
+				            return false;
+				        }
+				        mappingJsonData = mappingData;
+				        graphJsonData = graphData;
+
+				        var inputSelector = d3.select("#ob-cqm-input");
+				        var submitBtn = d3.select("#submit_data");
+				        var sidebarData = mappingData.slice(0,10);
+				        var html ="";
+				            for(var key in sidebarData){
+                               html+="<li data-obscode ='"+sidebarData[key]['obscode']+"'>"+sidebarData[key]['obscode']+"</li>";
+				            } 
+				            sidebarList.html(html); 
+				            sidebarLinks=    d3.selectAll("ul.sidebar-list li");
+
+				        inputSelector.on("keyup", function(ev) {
+
+				            if (d3.event.keyCode == 13) {
+				                filiterResult(this.value);
+				            }
+
+				        });
+				        submitBtn.on("click",function(){
+
+				        	  
+				        	   filiterResult(inputSelector.node().value);
+				        	   return false;
+				        	   
+				        });
+				        sidebarLinks.on("click",function(){
+				        	inputSelector.node().value= $(this).data("obscode");
+                           filiterResult($(this).data("obscode"));
+				        	return false;
+				        });
+
+
+
+				    }
+				    queue()
+				        .defer(d3.json, 'json/mappings.json')
+				        .defer(d3.json, 'json/graph.json')
+				        .await(initializeScript);
+        });
+    </script> 
+</body>
+</html>

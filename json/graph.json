@@ -1,0 +1,65 @@
+[
+  {
+  "node" : "height",
+  "neighbors": [
+      "weight",
+      "tall"
+    ]
+  },
+  {
+  "node" : "weight",
+  "neighbors": [
+      "height",
+      "centimetres",
+      "tall"
+    ]
+  },
+  {
+    "node" : "counsel",
+    "neighbors": [
+      "management",
+      "education",
+      "guidance",
+      "procedure"
+    ]
+  },
+  {
+    "node" : "smoking",
+    "neighbors": [
+      "tobacco"
+    ]
+  },
+  {
+    "node" : "eye",
+    "neighbors": [
+      "retina"
+    ]
+  },
+  {
+    "node" : "exam",
+    "neighbors": [
+      "test",
+      "examination",
+      "algebra",
+      "screening"
+    ]
+  },
+  {
+    "node" : "results",
+    "neighbors": [
+      "pregnancy",
+      "procedure",
+      "outcome"
+    ]
+  },
+  {
+    "node" : "protein",
+    "neighbors": [
+      "albumin",
+      "kinase",
+      "binding",
+      "transcription"
+    ]
+  }
+
+]

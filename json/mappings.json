@@ -1,0 +1,32 @@
+[
+  {
+  "obscode": "3094",
+  "obsdesciption": "height in centimeters E&M",
+  "cqmcode": "LOINC 8302-2",
+  "cqmdesciption": "Body height"
+  },
+  {
+  "obscode": "21679",
+  "obsdesciption": "blood pressure, diastolic, fourth observation",
+  "cqmcode": "LOINC 8462-4",
+  "cqmdesciption": "Diastolic blood pressure"
+  },
+  {
+    "obscode": "118",
+    "obsdesciption": "protein urine semiquantitative dipstick",
+    "cqmcode": "LOINC 1753-3",
+    "cqmdesciption": "albumin presence  urine"
+  },
+  {
+    "obscode": "2487",
+    "obsdesciption": "diet counsel",
+    "cqmcode": "SNOMEDCT 4247530004",
+    "cqmdesciption": "dietary management education guidance procedure"
+  },
+  {
+    "obscode": "43479",
+    "obsdesciption": "diabetic eye exam results",
+    "cqmcode": "SNOMEDCT 274798009",
+    "cqmdesciption": "examination retina procedure"
+  }
+]
